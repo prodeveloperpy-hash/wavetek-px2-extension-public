@@ -79,13 +79,13 @@ async function performRequestInPx2Tab(request) {
           redirect: "follow",
           signal: controller.signal
         });
-        const body = await response.text();
+        const responseBody = await response.text();
         return {
           success: true,
           status: response.status,
           statusText: response.statusText,
           headers: Object.fromEntries(response.headers.entries()),
-          body: body.slice(0, 20000)
+          body: responseBody.slice(0, 20000)
         };
       } catch (error) {
         return { success: false, error: error.message || "PX2 tab request failed" };
