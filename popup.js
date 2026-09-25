@@ -68,7 +68,13 @@ async function readSetting() {
     await loginIfNeeded();
     const response = await send({ url: urlFor(pathFor($("readPath").value, name)), method: "GET", headers: headers() });
     if (response.status >= 400) throw new Error(`Read failed (HTTP ${response.status}).`);
-    show($("settingResult"), `Response: ${response.body.slice(0, 300) || "(empty)"}`, "ok");
+    const form = parsePx2Form(response.body);
+    if (Object.prototype.hasOwnProperty.call(form, name)) {
+      $("settingValue").value = form[name];
+      show($("settingResult"), `${name} = ${form[name]}`, "ok");
+    } else {
+      show($("settingResult"), `Response: ${response.body.slice(0, 300) || "(empty)"}`, "ok");
+    }
   } catch (error) { show($("settingResult"), error.message, "error"); }
 }
 async function writeSetting() {
@@ -78,10 +84,35 @@ async function writeSetting() {
   try {
     if (!await requestHostPermission()) throw new Error("PX2 access permission denied.");
     await loginIfNeeded();
-    const json = $("bodyFormat").value === "json";
-    const body = json ? JSON.stringify({ name, value }) : new URLSearchParams({ [name]: value }).toString();
-    const response = await send({ url: urlFor(pathFor($("writePath").value, name)), method: $("writeMethod").value, headers: headers({ "Content-Type": json ? "application/json" : "application/x-www-form-urlencoded" }), body });
+    const format = $("bodyFormat").value;
+    let request;
+    if (format === "multipart") {
+      const current = await send({ url: urlFor(pathFor($("readPath").value, name)), method: "GET", headers: headers() });
+      if (current.status >= 400) throw new Error(`Unable to load current settings (HTTP ${current.status}).`);
+      const formData = parsePx2Form(current.body);
+      if (!Object.prototype.hasOwnProperty.call(formData, name)) throw new Error(`PX2 form field “${name}” was not found.`);
+      formData[name] = value;
+      formData.submit = formData.submit || "1";
+      formData.action = formData.action || "Save Changes";
+      request = { url: urlFor(pathFor($("writePath").value, name)), method: $("writeMethod").value, headers: headers(), formData };
+    } else {
+      const json = format === "json";
+      const body = json ? JSON.stringify({ name, value }) : new URLSearchParams({ [name]: value }).toString();
+      request = { url: urlFor(pathFor($("writePath").value, name)), method: $("writeMethod").value, headers: headers({ "Content-Type": json ? "application/json" : "application/x-www-form-urlencoded" }), body };
+    }
+    const response = await send(request);
     if (response.status >= 400) throw new Error(`Update failed (HTTP ${response.status}).`);
     show($("settingResult"), `Setting applied (HTTP ${response.status}).`, "ok");
   } catch (error) { show($("settingResult"), error.message, "error"); }
+}
+
+function parsePx2Form(html) {
+  const document = new DOMParser().parseFromString(html, "text/html");
+  const fields = {};
+  for (const element of document.querySelectorAll("input[name], select[name], textarea[name], button[name]")) {
+    if (["checkbox", "radio"].includes(element.type) && !element.checked) continue;
+    if (["submit", "button"].includes(element.type) && !element.value) continue;
+    fields[element.name] = element.value;
+  }
+  return fields;
 }

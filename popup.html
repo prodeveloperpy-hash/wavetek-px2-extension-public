@@ -39,8 +39,8 @@
 
     <section class="card">
       <h2>POC setting</h2>
-      <label>Setting name<input id="settingName" value="device_name"></label>
-      <label>Current / new value<input id="settingValue" value="Wavetek-PX2"></label>
+      <label>Setting name<input id="settingName" value="description"></label>
+      <label>Current / new value<input id="settingValue" value="Wavetek POC Test"></label>
       <div class="actions">
         <button id="read">Read setting</button>
         <button id="write" class="primary">Apply setting</button>
@@ -50,15 +50,15 @@
 
     <details class="card advanced">
       <summary>Endpoint configuration</summary>
-      <label>Connection path<input id="connectionPath" value="/"></label>
+      <label>Connection path<input id="connectionPath" value="/cgi-bin/webif/system-info.sh?interval=20"></label>
       <label>Login path<input id="loginPath" value="/login"></label>
-      <label>Read path<input id="readPath" value="/api/settings/{name}"></label>
-      <label>Write path<input id="writePath" value="/api/settings/{name}"></label>
+      <label>Read path<input id="readPath" value="/cgi-bin/webif/system-settings.sh"></label>
+      <label>Write path<input id="writePath" value="/cgi-bin/webif/system-settings.sh"></label>
       <label>Write method
         <select id="writeMethod"><option>POST</option><option>PUT</option><option>PATCH</option></select>
       </label>
       <label>Request format
-        <select id="bodyFormat"><option value="json">JSON</option><option value="form">Form URL encoded</option></select>
+        <select id="bodyFormat"><option value="multipart">PX2 multipart form</option><option value="json">JSON</option><option value="form">Form URL encoded</option></select>
       </label>
       <p class="hint">Replace these paths after inspecting the PX2 WebUI Network requests.</p>
     </details>

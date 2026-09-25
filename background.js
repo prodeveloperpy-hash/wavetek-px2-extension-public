@@ -25,7 +25,7 @@ async function performRequest(request) {
     const response = await fetch(request.url, {
       method: request.method || "GET",
       headers: request.headers || {},
-      body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
+      body: ["GET", "HEAD"].includes(request.method) ? undefined : buildRequestBody(request),
       credentials: request.credentials || "include",
       redirect: "follow",
       signal: controller.signal
@@ -45,6 +45,15 @@ async function performRequest(request) {
   }
 }
 
+function buildRequestBody(request) {
+  if (request.formData) {
+    const data = new FormData();
+    for (const [key, value] of Object.entries(request.formData)) data.append(key, value);
+    return data;
+  }
+  return request.body;
+}
+
 async function performRequestInPx2Tab(request) {
   const origin = new URL(request.url).origin;
   const tabs = await chrome.tabs.query({ url: `${origin}/*` });
@@ -57,10 +66,15 @@ async function performRequestInPx2Tab(request) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), input.timeoutMs || 10000);
       try {
+        let body = input.body;
+        if (input.formData) {
+          body = new FormData();
+          for (const [key, value] of Object.entries(input.formData)) body.append(key, value);
+        }
         const response = await fetch(input.url, {
           method: input.method || "GET",
           headers: input.headers || {},
-          body: ["GET", "HEAD"].includes(input.method) ? undefined : input.body,
+          body: ["GET", "HEAD"].includes(input.method) ? undefined : body,
           credentials: "include",
           redirect: "follow",
           signal: controller.signal
