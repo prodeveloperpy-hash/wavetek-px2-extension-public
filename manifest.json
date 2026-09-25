@@ -3,7 +3,7 @@
   "name": "Wavetek PX2 POC",
   "version": "0.1.0",
   "description": "Proof of concept for reading and changing a PX2 setting over Ethernet.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "scripting", "tabs"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "background.js"
